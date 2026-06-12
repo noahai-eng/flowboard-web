@@ -34,3 +34,37 @@ nicht zu wiederholen.
   asymmetrischen Keys.
 - **dnd-kit hat zwei API-Generationen** (`@dnd-kit/core` klassisch vs `@dnd-kit/react` neu).
   Vor Spec 7 Versions-Reife prüfen.
+
+## Spec 01 (Schema + RLS)
+
+- **Supabase-MCP-Token endgueltig gefixt:** Es braucht einen Personal Access Token
+  (`sbp_…`, von dashboard/account/tokens), NICHT den Publishable Key (`sb_publishable_…`)
+  und keinen JWT. Wert direkt als String in `.mcp.json` (`--access-token`), KEIN `${}`.
+  Zusaetzlich `--project-ref <ref>` ergaenzt → MCP laeuft projekt-gebunden, die
+  Account-Level-Tools (`list_projects`, `list_organizations` …) verschwinden dann; mit
+  `list_tables` testen statt `list_projects`. Reconnect erst NACH dem Speichern der Datei.
+- **`now()` ist transaktions-konstant:** `updated_at`-Trigger im selben `begin/commit` wie
+  der Insert zu testen schlaegt fehl (created_at == updated_at). Loesung: `updated_at`
+  kuenstlich auf altes Datum setzen, dann Update → gegen das alte Datum vergleichen.
+- **SECURITY DEFINER triggert Advisor:** `handle_new_user` war per `/rest/v1/rpc/...` fuer
+  anon/authenticated aufrufbar (WARN). Fix: `revoke execute`. Trigger feuert trotzdem,
+  da Trigger-Ausfuehrung kein EXECUTE-Grant braucht. Merkposten fuer kuenftige RPCs.
+- **RLS-`with check` nicht via `execute_sql` testbar:** das MCP-SQL laeuft als privilegierte
+  Rolle und umgeht RLS. Owner-Enforcement erst mit echtem authenticated-Client (Spec 2).
+
+## Spec 02 (Auth)
+
+- **proxy.ts gehoert bei src-Layout nach `src/proxy.ts`, NICHT ins Projekt-Root.**
+  Spec 02 listete `flow-board-web/proxy.ts` — bei `src/app`-Struktur wird die Root-Datei
+  NICHT erkannt (kein Compile, `/` lieferte 200 statt Redirect). Nach `src/` verschoben →
+  funktioniert. Beim Verschieben `.next` loeschen (Turbopack cached die alte Pfad-Referenz,
+  sonst 500 „Could not parse module proxy.ts, file not found").
+- **Confirm-Email war im Projekt bereits AUS** — `signUp` liefert sofort eine Session.
+  Per GoTrue-Endpoint (`/auth/v1/signup`) testbar (access_token im Response = AUS).
+  Falls es bei einem anderen Projekt AN ist: Dashboard → Authentication → Sign In/Providers.
+- **Zod 4:** Custom-Messages via `{ error: '...' }` (nicht `message`), `z.email()` statt
+  `z.string().email()` (letzteres deprecated).
+- **getClaims-Rueckgabe:** `data` kann null sein → `const { data } = ...; data?.claims`.
+  Direktes `data: { claims }`-Destructuring failt im Typecheck.
+- **redirect-Ziel `/board` existiert erst ab Spec 3** — Auth funktioniert, voller
+  Click-Through (Sign-Up→Reload→Sign-Out) erst mit Base-Layout testbar.

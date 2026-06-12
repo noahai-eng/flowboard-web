@@ -33,8 +33,8 @@ Legende: ⬜ offen · 🟦 in Arbeit · ✅ fertig
 | #  | Paket | Spec | Status |
 |----|-------|------|--------|
 | 0  | Projekt-Skeleton (Scaffold, Docs, Monorepo, Tooling) | — | ✅ |
-| 1  | Schema + RLS | `01-schema-rls.md` | ⬜ |
-| 2  | Auth | `02-auth.md` | ⬜ |
+| 1  | Schema + RLS | `01-schema-rls.md` | ✅ |
+| 2  | Auth | `02-auth.md` | ✅ |
 | 3  | Base-Layout | `03-layout.md` | ⬜ |
 | 4  | Boards-CRUD | `04-boards.md` | ⬜ |
 | 5  | Lists-CRUD | `05-lists.md` | ⬜ |

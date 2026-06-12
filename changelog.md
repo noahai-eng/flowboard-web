@@ -2,6 +2,49 @@
 
 Was pro Spec / Phase fertig wurde. Neueste Eintraege oben.
 
+## Spec 02 — Auth (2026-06-12)
+
+- `@supabase/ssr`, `@supabase/supabase-js`, `zod` installiert.
+- Client-Factories: `lib/supabase/client.ts` (Browser), `lib/supabase/server.ts`
+  (async, `await cookies()`, getAll/setAll mit try/catch), `lib/supabase/proxy.ts`
+  (`updateSession`, getClaims, kein Code zwischen createServerClient und getClaims).
+- **Proxy liegt in `src/proxy.ts`** (NICHT Root — bei src-Layout sucht Next dort).
+  Matcher schliesst static assets + `/login`/`/signup` aus. Auth-Gate: ohne Claims →
+  Redirect `/login` (refreshte Cookies auf Redirect-Response uebernommen).
+- Server Actions `(auth)/actions.ts`: login/signup (Zod-validiert, signInWithPassword/
+  signUp, revalidatePath + redirect `/board`), signout (getClaims-Check → signOut →
+  `/login`). Typisiertes `AuthState` fuer inline Fehler, keine Auth-Internals nach aussen.
+- UI: `(auth)/login` + `(auth)/signup` (Server-Pages, leiten eingeloggte → `/board`),
+  gemeinsame `auth-form.tsx` (Client, useActionState + Pending, Gradient-Layer, Focus-States).
+- `.env.local` mit `NEXT_PUBLIC_SUPABASE_URL` + `_PUBLISHABLE_KEY` (gitignored).
+- Verifiziert: `/` + `/board` ohne Session → 307 `/login`; `/login`+`/signup` 200;
+  Confirm-Email ist im Projekt bereits AUS → echter signUp liefert Session und legt
+  User + profiles-Row (tz Europe/Vienna) an (Probe-User wieder geloescht). typecheck+lint gruen.
+- Offen bis Spec 3: Sign-Up/-In landen auf `/board` (Route existiert erst mit Base-Layout) —
+  voller Browser-Click-Through (Reload/Sign-Out) dann.
+- **Codex-Review (Spec 1+2):** keine Blocker. 1 Warning → gefixt: Migrations-SQL als
+  Dateien in `supabase/migrations/` committet (vorher nur in Supabase + Changelog).
+  2 Nits → gefixt: Submit-Button Gradient statt Flat-Fill, `motion-reduce:transition-none`
+  auf Inputs/Link/Button. (typecheck-Sandbox-Hinweis war Artefakt; `*.tsbuildinfo` ist ignoriert.)
+
+## Spec 01 — Schema + RLS (2026-06-12)
+
+- 4 Migrationen via Supabase MCP `apply_migration`: `create_core_tables`,
+  `enable_rls_policies`, `triggers_updated_at_and_new_user`,
+  `revoke_execute_handle_new_user`.
+- Tabellen profiles/boards/lists/cards mit Checks, Indizes (owner/board_id/list_id +
+  position, board_id fuer Realtime), `owner`-Default `auth.uid()`.
+- RLS auf allen 4 Tabellen, owner-Muster `(select auth.uid()) = owner` (profiles: = id),
+  `for all to authenticated` mit `with check`.
+- Trigger: `set_updated_at` (BEFORE UPDATE auf boards/lists/cards), `handle_new_user`
+  (AFTER INSERT auf auth.users → profiles-Zeile). Beide mit `set search_path = ''`.
+- Security-Advisor: `handle_new_user` (SECURITY DEFINER) war per REST-RPC aufrufbar →
+  `revoke execute ... from public, anon, authenticated`. Advisor danach ohne Findings.
+- TS-Typen → `flow-board-web/src/lib/supabase/database.types.ts`. typecheck + lint gruen.
+- Funktional verifiziert (Transaktion + rollback): neuer auth-User bekommt profiles-Zeile
+  (tz Europe/Vienna), `updated_at` wird bei Update gehoben. owner-`with check` erst mit
+  Spec 2 (Auth) end-to-end testbar.
+
 ## Phase 1-3 — Discovery, Sparring, Specs (2026-06-12)
 
 - Phase 1 Discovery: 2 parallele Sub-Agents (Supabase SSR/RLS/Realtime, DnD-Position),
