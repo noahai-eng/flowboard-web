@@ -2,6 +2,28 @@
 
 Was pro Spec / Phase fertig wurde. Neueste Eintraege oben.
 
+## Spec 03 — Base-Layout (2026-06-12)
+
+- `(app)`-Route-Group mit Server-Layout `(app)/layout.tsx`: laedt RLS-gefilterte Boards
+  + Email (getClaims) parallel, rendert App-Shell.
+- `components/app-shell/sidebar.tsx` (Client): Brand, Smart-View-Platzhalter (Heute/Focus
+  mit „Bald"-Badge), Board-Liste (Empty-State wenn leer), aktiver Nav-Zustand via
+  usePathname + aria-current, responsive Off-Canvas auf Mobile (Topbar + Backdrop),
+  Menue schliesst beim Nav-Klick (kein setState-in-Effect). Inline-SVG-Icons (kein Icon-Paket).
+- `components/app-shell/user-menu.tsx` (Client): Avatar-Initiale, Email, Sign-Out via
+  `signout`-Server-Action (form action).
+- `(app)/board/page.tsx`: Willkommens-/Empty-State (Gradient-Layer).
+- Root `app/page.tsx` → `redirect('/board')` (Next-Default-Page ersetzt).
+- Design-System: Gradients/Layering, Hover+Focus auf allen Nav-Items, `motion-reduce`,
+  `min-h-dvh`.
+- Verifiziert: echte Session (nachgebautes @supabase/ssr-Cookie) → `/board` rendert Shell
+  (Brand, Smart-Views, User-Menu, Email) mit 200; ohne Session `/board`+`/` → 307 `/login`.
+  typecheck + lint gruen. Probe-User wieder geloescht.
+- **Codex-Review:** keine Blocker. 1 Warning → gefixt: Board-Fetch-Fehler nicht mehr
+  verschluckt (serverseitig geloggt + eigener Fehlerzustand in der Sidebar statt
+  „keine Boards"). 1 Nit → gefixt: `aria-expanded`/`aria-controls` am Mobile-Menue-Button,
+  `id` am `aside`.
+
 ## Spec 02 — Auth (2026-06-12)
 
 - `@supabase/ssr`, `@supabase/supabase-js`, `zod` installiert.

@@ -68,3 +68,15 @@ nicht zu wiederholen.
   Direktes `data: { claims }`-Destructuring failt im Typecheck.
 - **redirect-Ziel `/board` existiert erst ab Spec 3** — Auth funktioniert, voller
   Click-Through (Sign-Up→Reload→Sign-Out) erst mit Base-Layout testbar.
+
+## Spec 03 (Base-Layout)
+
+- **`setState` synchron im `useEffect` = ESLint-Fehler** (`react-hooks/set-state-in-effect`).
+  Mobile-Menue NICHT per `useEffect(() => setOpen(false), [pathname])` schliessen, sondern
+  per `onClick` am Nav-Link (`onNavigate`-Callback). Lint-clean + weniger Re-Renders.
+- **Authentifizierte Route ohne Browser testbar:** `@supabase/ssr`-Cookie nachbauen —
+  Name `sb-<ref>-auth-token`, Wert `base64-` + base64url(JSON.stringify(session)), bei
+  >3180 Zeichen chunked (`.0`, `.1`). Session via GoTrue `/auth/v1/signup` holen, Cookie
+  setzen, Route mit `redirect:'manual'` abrufen → Shell rendert (200) statt /login-Redirect.
+- **getClaims-Email:** `claims.email` ist `unknown`-artig typisiert → `typeof ... === 'string'`
+  guard statt direktem Zugriff (sonst Typecheck-Stolperstein).
