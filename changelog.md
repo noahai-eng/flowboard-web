@@ -2,6 +2,42 @@
 
 Was pro Spec / Phase fertig wurde. Neueste Eintraege oben.
 
+## Phase B — Kern-Kanban, Specs 04–09 (2026-06-12)
+
+Alle 6 Specs nacheinander implementiert, je einzeln Codex-reviewed, Findings gefixt;
+ein gemeinsamer Commit am Ende (Wunsch fuer Ueberblick).
+
+**Shared:** `safeAction`-Wrapper (`lib/action-result.ts`), Board-Client-Architektur
+`BoardView` (optimistischer State fuer Listen/Cards/DnD/Labels), UI-Primitives auf
+`@base-ui/react` (`ui/dialog`, `ui/dropdown-menu`, `ui/input`, `ui/textarea`,
+`ui/confirm-dialog`), Icons via `lucide-react`. Mutationen ueber Server Actions mit
+`.select().single()` (0-Row-RLS = Fehler).
+
+- **04 Boards:** create/rename/delete (Server Actions), Board-Detail-Route, create-board-
+  Dialog (Sidebar + Empty-State-CTA), board-menu (inline rename / delete-confirm).
+  Codex: try/catch-Wrapper (`safeAction`), Input/Textarea-Hover, Sidebar-Copy.
+- **05 Lists:** create/rename/delete, horizontale Spalten, add-list, delete-confirm bei
+  nicht-leerer Liste. Codex-Blocker: Cards in Page laden (echte `cards.length`); 0-Row als Fehler.
+- **06 Cards (Quick-Add):** Enter speichert + bleibt fokussiert, optimistisch mit id-Reconcile,
+  inline edit, delete. Codex: `motion-safe` Hover, Focus-Ring auf Textareas.
+- **07 DnD:** dnd-kit klassisch (core 6 + sortable 10; nicht @dnd-kit/react 0.5). `move_card`-
+  RPC (SECURITY INVOKER, Integer-Gaps + inline Reindex, board_id-Sync). Codex-Blocker:
+  Cross-List nur in onDragOver, Same-List nur in onDragEnd (Off-by-one behoben).
+  Motion `layout`/`layoutId` bewusst weggelassen (Doppel-Transform mit dnd-kit, Discovery §B2).
+- **08 Card-Detail-Modal:** base-ui-Dialog (Focus-Trap, Scale/Fade statt layoutId — s.o.),
+  Titel/Beschreibung/Due-Date Auto-Save, Delete. Codex-Blocker: expliziter Close-Button;
+  Rollback nur der gepatchten Felder; Gradient-Backdrop.
+- **09 Labels + Priority:** labels + card_labels (RLS, Color-CHECK = `LABEL_COLORS`),
+  `--label-*`-Tokens (Light/Dark oklch), Chips (color-mix) + Priority-Indikator, Label-Picker
+  + Priority-Select im Modal. Codex-Blocker: Board-Scoping in RLS verankert (EXISTS statt nur
+  Action-Check) — Cross-Board-Assign jetzt 403; assignLabel prueft Board-Zugehoerigkeit;
+  unassignLabel revalidiert.
+
+**Verifikation je Spec:** typecheck + lint gruen; Datenschicht via PostgREST mit echtem
+User-Token (gleicher RLS-Pfad wie Actions) + SSR-Render via nachgebautem ssr-Cookie;
+`move_card` per SQL/REST (Same/Cross/Reindex/RLS); `get_advisors` nach DDL ohne Findings
+(ausser projektweitem `auth_leaked_password_protection` → backlog).
+
 ## Spec 03 — Base-Layout (2026-06-12)
 
 - `(app)`-Route-Group mit Server-Layout `(app)/layout.tsx`: laedt RLS-gefilterte Boards

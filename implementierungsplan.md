@@ -36,12 +36,12 @@ Legende: ⬜ offen · 🟦 in Arbeit · ✅ fertig
 | 1  | Schema + RLS | `01-schema-rls.md` | ✅ |
 | 2  | Auth | `02-auth.md` | ✅ |
 | 3  | Base-Layout | `03-layout.md` | ✅ |
-| 4  | Boards-CRUD | `04-boards.md` | ⬜ |
-| 5  | Lists-CRUD | `05-lists.md` | ⬜ |
-| 6  | Cards-CRUD (Quick-Add) | `06-cards.md` | ⬜ |
-| 7  | Cards-DnD | `07-dnd.md` | ⬜ |
-| 8  | Card-Detail-Modal | `08-card-detail.md` | ⬜ |
-| 9  | Labels + Priority | `09-labels-priority.md` | ⬜ |
+| 4  | Boards-CRUD | `04-boards.md` | ✅ |
+| 5  | Lists-CRUD | `05-lists.md` | ✅ |
+| 6  | Cards-CRUD (Quick-Add) | `06-cards.md` | ✅ |
+| 7  | Cards-DnD | `07-dnd.md` | ✅ |
+| 8  | Card-Detail-Modal | `08-card-detail.md` | ✅ |
+| 9  | Labels + Priority | `09-labels-priority.md` | ✅ |
 | 10 | Smart-View Heute | `10-smart-view-heute.md` | ⬜ |
 | 11 | Focus-Mode | `11-focus-mode.md` | ⬜ |
 | 12 | Full-Text Search | `12-fts.md` | ⬜ |
