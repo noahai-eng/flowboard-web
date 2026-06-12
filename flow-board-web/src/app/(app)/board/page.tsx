@@ -1,3 +1,5 @@
+import { CreateBoardDialog } from '@/components/board/create-board-dialog'
+
 export default function BoardEntryPage() {
   return (
     <div className="relative grid min-h-dvh place-items-center overflow-hidden px-6 py-16">
@@ -29,9 +31,11 @@ export default function BoardEntryPage() {
 
         <h1 className="text-2xl font-semibold tracking-tight">Willkommen bei Flow Board</h1>
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-          Waehle links ein Board aus oder lege ein neues an. Die Board-Erstellung
-          und die Karten kommen mit den naechsten Schritten.
+          Waehle links ein Board aus oder lege dein erstes Board an, um loszulegen.
         </p>
+        <div className="mt-6 flex justify-center">
+          <CreateBoardDialog variant="cta" />
+        </div>
       </div>
     </div>
   )

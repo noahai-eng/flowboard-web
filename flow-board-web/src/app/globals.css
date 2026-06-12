@@ -91,6 +91,16 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+
+  /* Label-Preset-Palette (Spec 9) — Light, abgestufte oklch (keine grellen Hex). */
+  --label-red: oklch(0.58 0.2 25);
+  --label-orange: oklch(0.62 0.17 55);
+  --label-amber: oklch(0.66 0.14 85);
+  --label-green: oklch(0.58 0.16 150);
+  --label-teal: oklch(0.6 0.12 195);
+  --label-blue: oklch(0.56 0.16 255);
+  --label-violet: oklch(0.55 0.2 300);
+  --label-pink: oklch(0.6 0.2 350);
 }
 
 .dark {
@@ -125,6 +135,16 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+
+  /* Label-Preset-Palette (Spec 9) — Dark, etwas heller fuer Kontrast auf dunklem Grund. */
+  --label-red: oklch(0.7 0.18 25);
+  --label-orange: oklch(0.74 0.15 55);
+  --label-amber: oklch(0.8 0.13 85);
+  --label-green: oklch(0.72 0.15 150);
+  --label-teal: oklch(0.74 0.11 195);
+  --label-blue: oklch(0.7 0.14 255);
+  --label-violet: oklch(0.7 0.18 300);
+  --label-pink: oklch(0.74 0.18 350);
 }
 
 @layer base {

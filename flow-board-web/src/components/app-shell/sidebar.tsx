@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState, type ReactNode } from 'react'
 
+import { CreateBoardDialog } from '@/components/board/create-board-dialog'
 import { cn } from '@/lib/utils'
 
 import { UserMenu } from './user-menu'
@@ -76,7 +77,7 @@ export function Sidebar({ boards, boardsError = false, email }: SidebarProps) {
               </p>
             ) : boards.length === 0 ? (
               <p className="px-3 py-2 text-xs leading-relaxed text-muted-foreground">
-                Noch keine Boards. Die Board-Erstellung kommt in Kuerze.
+                Noch keine Boards. Erstelle dein erstes Board.
               </p>
             ) : (
               boards.map((board) => {
@@ -93,6 +94,9 @@ export function Sidebar({ boards, boardsError = false, email }: SidebarProps) {
                 )
               })
             )}
+            <div className="pt-1">
+              <CreateBoardDialog variant="sidebar" />
+            </div>
           </Section>
         </nav>
 

@@ -41,6 +41,39 @@ export type Database = {
         }
         Relationships: []
       }
+      card_labels: {
+        Row: {
+          card_id: string
+          label_id: string
+          owner: string
+        }
+        Insert: {
+          card_id: string
+          label_id: string
+          owner?: string
+        }
+        Update: {
+          card_id?: string
+          label_id?: string
+          owner?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "card_labels_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "cards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "card_labels_label_id_fkey"
+            columns: ["label_id"]
+            isOneToOne: false
+            referencedRelation: "labels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cards: {
         Row: {
           board_id: string
@@ -94,6 +127,41 @@ export type Database = {
             columns: ["list_id"]
             isOneToOne: false
             referencedRelation: "lists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      labels: {
+        Row: {
+          board_id: string
+          color: string
+          created_at: string
+          id: string
+          name: string
+          owner: string
+        }
+        Insert: {
+          board_id: string
+          color: string
+          created_at?: string
+          id?: string
+          name: string
+          owner?: string
+        }
+        Update: {
+          board_id?: string
+          color?: string
+          created_at?: string
+          id?: string
+          name?: string
+          owner?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "labels_board_id_fkey"
+            columns: ["board_id"]
+            isOneToOne: false
+            referencedRelation: "boards"
             referencedColumns: ["id"]
           },
         ]
@@ -159,7 +227,33 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      move_card: {
+        Args: {
+          p_after_card_id: string
+          p_before_card_id: string
+          p_card_id: string
+          p_target_list_id: string
+        }
+        Returns: {
+          board_id: string
+          created_at: string
+          description: string | null
+          due_date: string | null
+          id: string
+          list_id: string
+          owner: string
+          position: number
+          priority: number | null
+          title: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "cards"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
     }
     Enums: {
       [_ in never]: never

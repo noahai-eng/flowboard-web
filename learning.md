@@ -80,3 +80,30 @@ nicht zu wiederholen.
   setzen, Route mit `redirect:'manual'` abrufen → Shell rendert (200) statt /login-Redirect.
 - **getClaims-Email:** `claims.email` ist `unknown`-artig typisiert → `typeof ... === 'string'`
   guard statt direktem Zugriff (sonst Typecheck-Stolperstein).
+
+## Phase B (Specs 04–09, Kern-Kanban)
+
+- **UI-Primitives liegen auf `@base-ui/react`** (Dialog/Menu/Select; Namespace-Import
+  `import { Dialog } from '@base-ui/react/dialog'`, dann `Dialog.Root/Popup/...`).
+  `lucide-react` + `motion` waren schon installiert. Kein shadcn-CLI noetig.
+- **dnd-kit: klassische API** (`@dnd-kit/core` 6 + `@dnd-kit/sortable` 10), NICHT
+  `@dnd-kit/react` (erst 0.5.0, unreif). Im Zweifel klassisch (breit dokumentiert).
+- **DnD Off-by-one (Codex-Blocker):** Cross-List in `onDragOver` UND `arrayMove` in
+  `onDragEnd` = doppeltes Verschieben. Loesung: Cross-List nur in onDragOver (richtungs-
+  bewusst via `active.rect.translated` vs `over.rect`), Same-List nur in onDragEnd; ein
+  `didCrossRef`-Flag trennt die Pfade.
+- **`move_card`-RPC:** `SECURITY INVOKER` (RLS sichert Ownership), `set search_path=''`,
+  `for update` auf bewegter Card, Anchor-Positionen frisch lesen, Reindex INLINE (keine
+  zweite RPC exponieren). `now()`-Test-Artefakt siehe Spec 1.
+- **Motion `layout`/`layoutId` NICHT auf dnd-kit-Cards** (Doppel-Transform, Discovery §B2).
+  Card-Detail-Modal daher base-ui-Dialog + Scale/Fade statt Shared-Layout-Transition.
+  Bewusste Spec-Abweichung, in Spec 8 begruendet.
+- **RLS-Board-Scoping muss in der Policy stehen (Codex-Blocker), nicht nur in der Action:**
+  `with check` braucht `exists(... boards/cards/labels ... owner = auth.uid())`, sonst
+  koennen direkte PostgREST-Inserts Board-Grenzen umgehen. Gilt analog fuer lists/cards
+  (dort nur action-seitig geprueft — contained, aber als Haertung im Backlog vormerken).
+- **`.select().single()` nach update/delete:** ohne das liefert Supabase bei 0 betroffenen
+  (RLS-)Rows KEINEN Fehler → optimistic State bliebe faelschlich. Mit `.single()` = Fehler.
+- **Verifikation ohne Browser:** Datenschicht via PostgREST mit echtem User-`access_token`
+  (identischer RLS-Pfad wie Server Actions) + SSR-Render via nachgebautem `sb-<ref>-auth-token`-
+  Cookie. Server Actions selbst sind per curl kaum aufrufbar (verschluesselte Action-IDs).
