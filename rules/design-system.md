@@ -5,10 +5,10 @@ oder generischer Kanban-Clone. UI muss hochwertig wirken.
 
 ## Tokens
 
-- Quelle: `src/app/globals.css` (`:root` = Light, `.dark` = Dark). Basis ist shadcn "neutral" (oklch).
+- Quelle: `flow-board-web/src/app/globals.css` (`:root` = Light, `.dark` = Dark). Basis ist shadcn "neutral" (oklch).
 - Sobald der User einen eigenen `globals.css`-Snippet liefert, ersetzt er die Token-Bloecke 1:1.
 - `--radius: 1rem` als Default — keine rechteckigen Cards.
-- Dark Mode ist **Default** (`.dark` am `<html>` in `layout.tsx`).
+- Dark Mode ist **Default** (`.dark` am `<html>` in `flow-board-web/src/app/layout.tsx`).
 
 ## Visuelle Regeln (Pflicht)
 

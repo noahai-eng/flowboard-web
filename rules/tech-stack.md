@@ -7,7 +7,7 @@ Trainingsstand kann veraltet sein. Ebenso bei Supabase-SSR-Eigenheiten.
 
 ## Versionen (Stand Scaffold)
 
-- Next.js **16.2.9** (App Router) — Cookie-Refresh in `proxy.ts`, kein `next lint`.
+- Next.js **16.2.9** (App Router, in `flow-board-web/`) — Cookie-Refresh in `proxy.ts`, kein `next lint`.
 - React **19.2.4**, TypeScript strict
 - Tailwind **v4**, shadcn/ui (Style `base-nova`, Base-Color neutral), `tw-animate-css`
 - Icons: `lucide-react`

@@ -3,6 +3,12 @@
 Persoenliche Kanban-App (Solo-User). Web jetzt, React-Native/Expo spaeter auf
 derselben Supabase-DB. Schema + APIs plattform-agnostisch halten.
 
+## Monorepo
+
+- `flow-board-web/` — Next.js 16 App (hier passiert die Web-Arbeit; npm-Befehle hier ausfuehren)
+- `flow-board-native/` — Expo App, spaeter (aktuell Platzhalter)
+- Root — uebergreifende Doku (`rules/`, `specs/`, Logs, `architektur-entscheidung.md`)
+
 ## Wo steht was
 
 - **Architektur (final):** `architektur-entscheidung.md` — Plattform-Achsen, nicht neu verhandeln.

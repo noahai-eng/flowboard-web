@@ -31,6 +31,6 @@ Ein Branch pro Spec. Skeleton-Commit von Phase 0 bleibt auf dem Default-Branch.
 
 ## Struktur
 
-- Shared Endpunkte (AI etc.) → `src/app/api/.../route.ts` (Web + Expo teilen HTTP).
+- Shared Endpunkte (AI etc.) → `flow-board-web/src/app/api/.../route.ts` (Web + Expo teilen HTTP).
 - Server Actions → Web-only, fuer Mutationen + CRUD.
 - Mutationslogik in shared Server-Funktionen oder Postgres-RPCs kapseln.

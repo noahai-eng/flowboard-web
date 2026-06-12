@@ -54,7 +54,32 @@ Solo-User-Kanban-Tool. Web plus Native (iOS/Android). AI-Features (Smart-Card-Ge
 - **Schema und APIs Plattform-agnostisch planen.** Web und Native arbeiten auf derselben DB, dieselben Endpunkte.
 - **Design-Tokens als Single Source of Truth.** CSS-Variablen im Web spiegeln 1:1 auf NativeWind-Config. Schatten und Animationen plattform-spezifisch.
 - **Reverse-Pattern in der Native-Phase.** Web-Build mit Claude Code, Native-Build mit Codex-Plugin als Builder. Agent-Diversität als Qualitätsmechanismus.
-- **AI-Endpunkt nur einmal bauen.** Route Handler im Web-Repo, Native ruft via `expo/fetch` auf.
+- **AI-Endpunkt nur einmal bauen.** Route Handler im Web-Workspace (`flow-board-web`), Native ruft via `expo/fetch` auf.
+
+---
+
+## Repo-Struktur (Monorepo)
+
+**Entscheidung (Update gegenueber "separates Repo"):** Web und Native leben als
+zwei Workspaces in **einem** Repo, nicht in getrennten Repos.
+
+```
+/ (Repo-Root)
+├── flow-board-web/      # Next.js 16 App (jetzt)
+├── flow-board-native/   # Expo App (spaeter, aktuell Platzhalter)
+├── architektur-entscheidung.md, CLAUDE.md, guidelines.md
+├── rules/  specs/       # plattform-uebergreifend (Single Source of Truth)
+└── implementierungsplan.md, backlog.md, changelog.md, learning.md
+```
+
+**Warum:**
+- Design-Tokens, Specs und Regeln liegen einmal im Root und gelten fuer beide Plattformen.
+- AI-Route-Handler liegen in `flow-board-web` und werden von Native via `expo/fetch` wiederverwendet — im selben Repo leichter referenzierbar.
+- Ein git-Verlauf statt zwei. Builder bleibt pro Workspace verschieden (Web: Claude Code, Native: Codex-Plugin).
+
+**Konsequenz:** App-Code immer im jeweiligen Workspace-Ordner, uebergreifende
+Doku im Root. npm-Befehle laufen im jeweiligen Workspace (z.B. `flow-board-web`).
+Ein Root-`package.json` mit npm-Workspaces folgt, sobald `flow-board-native` startet.
 
 ---
 

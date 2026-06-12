@@ -2,6 +2,15 @@
 
 Was pro Spec / Phase fertig wurde. Neueste Eintraege oben.
 
+## Phase 0 — Monorepo-Umbau (2026-06-12)
+
+- Auf Monorepo umgestellt: Web-Scaffold nach `flow-board-web/` verschoben,
+  `flow-board-native/` als Platzhalter angelegt (Expo kommt spaeter).
+- Uebergreifende Doku (`rules/`, `specs/`, Logs, `architektur-entscheidung.md`) bleibt im Root.
+- `.gitignore` gesplittet: app-spezifisch in `flow-board-web/.gitignore`, Root schlank.
+- `architektur-entscheidung.md` um Abschnitt "Repo-Struktur (Monorepo)" ergaenzt
+  (ersetzt frueheren "separates Repo"-Stand). CLAUDE.md, README, Rules-Pfade angepasst.
+
 ## Phase 0 — Skeleton (2026-06-12)
 
 - Next.js 16.2.9 Scaffold (TS strict, Tailwind v4, App Router, src-dir, npm).

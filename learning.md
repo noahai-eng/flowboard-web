@@ -14,3 +14,6 @@ nicht zu wiederholen.
   Preset `base-nova`). Base-Color steckt im Preset.
 - **Next 16 bestaetigt** (16.2.9): Cookie-Refresh gehoert in `proxy.ts`, nicht
   `middleware.ts`. `next lint` ist raus → `eslint .`.
+- **Monorepo statt separates Repo:** Web → `flow-board-web/`, Native → `flow-board-native/`
+  (spaeter). Uebergreifende Doku im Root. npm-Befehle laufen im Workspace, nicht im Root.
+  Root-`package.json` mit npm-Workspaces folgt, sobald Native startet.
