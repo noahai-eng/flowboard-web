@@ -17,3 +17,20 @@ nicht zu wiederholen.
 - **Monorepo statt separates Repo:** Web → `flow-board-web/`, Native → `flow-board-native/`
   (spaeter). Uebergreifende Doku im Root. npm-Befehle laufen im Workspace, nicht im Root.
   Root-`package.json` mit npm-Workspaces folgt, sobald Native startet.
+
+## Phase 1-3 (Discovery, Sparring, Specs)
+
+- **Supabase-MCP-Token war defekt:** Wert in `.mcp.json` war ein JWT (`eyJh…`) in `${}`
+  gewickelt — die MCP braucht aber einen Personal Access Token (`sbp_…`). Muss vom User
+  gefixt werden, bevor Spec 1 (Schema) baubar ist.
+- **Discovery-Befund (Realtime):** DELETE bei Postgres Changes ist NICHT spaltenfilterbar
+  (bei RLS nur PK im Payload) → DELETE lokal-optimistisch + PK-Abgleich oder Tombstone.
+- **Discovery-Befund (DnD):** Motion `Reorder` + dnd-kit auf denselben Cards kollidieren.
+  Entscheidung: **nur dnd-kit**, Animation via `motion layout`. Bewusste Abweichung vom
+  Kickoff, dokumentiert in Spec 7.
+- **Sparring-Entscheidung Position-Modell:** Integer-Gaps + Reindex (NICHT Fractional, das
+  war die Discovery-Empfehlung). User-Entscheidung; Reindex in `move_card` gekapselt.
+- **getClaims statt getUser** im Proxy (aktueller Supabase-Stand) — kein DB-Roundtrip bei
+  asymmetrischen Keys.
+- **dnd-kit hat zwei API-Generationen** (`@dnd-kit/core` klassisch vs `@dnd-kit/react` neu).
+  Vor Spec 7 Versions-Reife prüfen.

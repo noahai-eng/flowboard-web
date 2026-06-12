@@ -27,4 +27,6 @@ Codex-Review (siehe `rules/verification.md`). Inhalte werden in **Phase 3** erze
 
 ## Status
 
-Skeleton steht (Phase 0). Specs noch nicht geschrieben — folgt nach Discovery + Sparring.
+Alle 16 Specs geschrieben (Phase 3, 2026-06-12). Build-Reihenfolge = Nummerierung.
+Entscheidungen aus Sparring eingearbeitet: Position-Modell Integer-Gaps, Label-Preset-Palette,
+Quick-Add sofort speichern, DnD nur dnd-kit (kein Motion Reorder).

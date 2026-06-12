@@ -2,6 +2,16 @@
 
 Was pro Spec / Phase fertig wurde. Neueste Eintraege oben.
 
+## Phase 1-3 — Discovery, Sparring, Specs (2026-06-12)
+
+- Phase 1 Discovery: 2 parallele Sub-Agents (Supabase SSR/RLS/Realtime, DnD-Position),
+  konsolidiert in `references/discovery.md` (Quelle: Context7 MCP).
+- Phase 2 Sparring (3 Fragen): Position-Modell Integer-Gaps, Label-Preset-Palette,
+  Quick-Add sofort speichern.
+- Phase 3 Output: voller `implementierungsplan.md` (Arbeitspakete + Reihenfolge-Begruendung)
+  + 16 Feature-Specs `specs/01..16`.
+- Preflight-Befund: Supabase-MCP-Token defekt (muss gefixt werden), browser-use + Context7 ok.
+
 ## Phase 0 — Monorepo-Umbau (2026-06-12)
 
 - Auf Monorepo umgestellt: Web-Scaffold nach `flow-board-web/` verschoben,
