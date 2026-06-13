@@ -52,9 +52,18 @@ export function BoardView({ boardId, initialLists, initialLabels }: BoardViewPro
   const [activeCard, setActiveCard] = useState<CardT | null>(null)
   // Volltextsuche (Spec 12): ?card=<id> oeffnet die Karte direkt beim Laden.
   const searchParams = useSearchParams()
-  const [selectedId, setSelectedId] = useState<string | null>(
-    () => searchParams.get('card'),
-  )
+  const cardParam = searchParams.get('card')
+  const [selectedId, setSelectedId] = useState<string | null>(() => cardParam)
+  // Klick auf ein Suchergebnis des AKTUELLEN Boards aendert nur den Query-Param
+  // (kein Remount) -> der useState-Initializer feuert nicht erneut. Param-Wechsel
+  // waehrend des Renders abgleichen (React-empfohlen statt Effect+setState) und die
+  // Karte oeffnen. Schliessen setzt nur selectedId (nicht den Param) -> kein
+  // ungewolltes Wiederoeffnen, da der Param unveraendert bleibt.
+  const [seenCardParam, setSeenCardParam] = useState(cardParam)
+  if (cardParam !== seenCardParam) {
+    setSeenCardParam(cardParam)
+    if (cardParam) setSelectedId(cardParam)
+  }
   const selectedCard = lists.flatMap((l) => l.cards).find((c) => c.id === selectedId) ?? null
   // Snapshot vor dem Drag fuer Rollback bei Persistenz-Fehler.
   const snapshotRef = useRef<ListT[] | null>(null)
@@ -463,6 +472,7 @@ export function BoardView({ boardId, initialLists, initialLabels }: BoardViewPro
 
   return (
     <DndContext
+      id="board-dnd"
       sensors={sensors}
       collisionDetection={closestCorners}
       onDragStart={handleDragStart}

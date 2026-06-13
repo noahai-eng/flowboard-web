@@ -57,8 +57,12 @@ export function useRealtimeCards(
 ) {
   useEffect(() => {
     const supabase = createClient()
+    // Eindeutiger Topic pro Mount: neuere supabase-js geben bei gleichem Topic
+    // den bereits subscribten Channel zurueck -> `.on()` nach `.subscribe()`
+    // wuerfe (verschaerft durch StrictMode-Doppelmount im Dev). Der board_id-
+    // Filter ist die eigentliche Grenze, der Topic-Name ist beliebig.
     const channel = supabase
-      .channel(`cards:board:${boardId}`)
+      .channel(`cards:board:${boardId}:${crypto.randomUUID()}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'cards', filter: `board_id=eq.${boardId}` },

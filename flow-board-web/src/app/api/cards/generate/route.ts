@@ -1,5 +1,5 @@
 import { anthropic } from '@ai-sdk/anthropic'
-import { Output, streamText } from 'ai'
+import { streamObject } from 'ai'
 
 import { cardSuggestionSchema } from '@/lib/ai/card-suggestion'
 import { createClient } from '@/lib/supabase/server'
@@ -33,9 +33,14 @@ export async function POST(req: Request) {
     return new Response('Invalid prompt', { status: 400 })
   }
 
-  const result = streamText({
+  // streamObject mit output:'array' streamt partielles Array-JSON, das der Client
+  // (experimental_useObject mit z.array(...)) direkt parst. streamText+Output.array
+  // + toTextStreamResponse() lieferte dagegen {"elements":…} -> der Client bekam ein
+  // Objekt statt eines Arrays (.filter-Crash). schema ist hier das ELEMENT-Schema.
+  const result = streamObject({
     model: anthropic(MODEL),
-    output: Output.array({ element: cardSuggestionSchema }),
+    output: 'array',
+    schema: cardSuggestionSchema,
     system:
       'Du bist ein Assistent, der aus einer Aufgaben-/Projektbeschreibung konkrete, ' +
       'umsetzbare Kanban-Karten erzeugt. Antworte auf Deutsch. Jede Karte hat einen ' +
