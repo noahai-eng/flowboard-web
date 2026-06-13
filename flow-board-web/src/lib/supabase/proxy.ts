@@ -34,18 +34,34 @@ export async function updateSession(request: NextRequest) {
   // verursacht zufaellige Logouts.
   const { data } = await supabase.auth.getClaims()
   const claims = data?.claims
+  const { pathname } = request.nextUrl
 
-  // Auth-Gate: Nicht eingeloggte auf /login leiten. /login + /signup sind
-  // bereits ueber config.matcher ausgenommen, daher hier nur der Schutzfall.
-  if (!claims) {
+  // Hilfsfunktion: Redirect mit uebernommenen (refreshten) Cookies.
+  const redirectTo = (path: string) => {
     const url = request.nextUrl.clone()
-    url.pathname = '/login'
+    url.pathname = path
     const redirectResponse = NextResponse.redirect(url)
-    // Refreshte Cookies auf die Redirect-Response uebernehmen.
     supabaseResponse.cookies.getAll().forEach((cookie) =>
       redirectResponse.cookies.set(cookie),
     )
     return redirectResponse
+  }
+
+  // Spec 16: '/' ist die oeffentliche Landingpage (ausgeloggt erreichbar).
+  // Eingeloggte werden NUR von '/' auf '/board' geleitet (kein Loop, da
+  // /login + /signup + Assets bereits ueber config.matcher ausgenommen sind).
+  if (pathname === '/') {
+    return claims ? redirectTo('/board') : supabaseResponse
+  }
+
+  // Auth-Gate: Nicht eingeloggte auf /login leiten. /login + /signup sind
+  // bereits ueber config.matcher ausgenommen, daher hier nur der Schutzfall.
+  if (!claims) {
+    // Shared HTTP-Endpunkte (auch Expo): 401 statt HTML-Redirect.
+    if (pathname === '/api' || pathname.startsWith('/api/')) {
+      return new NextResponse('Unauthorized', { status: 401 })
+    }
+    return redirectTo('/login')
   }
 
   // supabaseResponse unveraendert zurueckgeben (Cookies nicht anfassen),

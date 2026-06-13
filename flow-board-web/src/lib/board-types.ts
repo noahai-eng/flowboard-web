@@ -15,6 +15,8 @@ export type CardT = {
   due_date: string | null
   priority: number | null
   position: number
+  focus_slot: number | null
+  is_focus_active: boolean
   labels: CardLabel[]
 }
 
@@ -28,4 +30,19 @@ export type ListT = {
 export type BoardT = {
   id: string
   title: string
+}
+
+// Card in einer board-uebergreifenden Smart-View (Heute, Focus). Traegt
+// zusaetzlich Board-Kontext, da diese Views Cards aus mehreren Boards mischen.
+export type SmartCardT = CardT & {
+  board_id: string
+  board_title: string
+}
+
+// Treffer der Volltextsuche (Spec 12), board-uebergreifend.
+export type SearchResultT = {
+  id: string
+  title: string
+  board_id: string
+  board_title: string
 }

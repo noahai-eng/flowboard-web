@@ -1,8 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { Check, Plus, Trash2, X } from 'lucide-react'
+import { Check, Loader2, Plus, Sparkles, Trash2, X } from 'lucide-react'
 
+import {
+  applySuggestion,
+  suggestCategory,
+  type CategorySuggestion,
+} from '@/app/(app)/board/[boardId]/category-actions'
 import { Dialog, DialogClose, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -14,8 +19,11 @@ import {
   labelChipStyle,
   labelDotStyle,
   PRIORITIES,
+  priorityConfig,
 } from '@/lib/labels'
 import { cn } from '@/lib/utils'
+
+type CategoryApplied = { priority: number | null; label: CardLabel | null }
 
 export type CardPatch = {
   title?: string
@@ -33,6 +41,11 @@ type CardDetailDialogProps = {
   onUnassignLabel: (cardId: string, labelId: string) => void
   onCreateLabel: (name: string, color: LabelColor) => Promise<CardLabel | null>
   onDelete: (id: string) => void
+  /** Optional: Focus-Slot setzen/entfernen (Spec 11). Ohne diese Props keine Focus-Sektion. */
+  onSetFocus?: (cardId: string, slot: number) => void
+  onClearFocus?: (cardId: string) => void
+  /** Optional: Auto-Kategorisierung (Spec 15). Callback aktualisiert lokalen State. */
+  onCategoryApplied?: (cardId: string, patch: CategoryApplied) => void
 }
 
 export function CardDetailDialog({
@@ -45,6 +58,9 @@ export function CardDetailDialog({
   onUnassignLabel,
   onCreateLabel,
   onDelete,
+  onSetFocus,
+  onClearFocus,
+  onCategoryApplied,
 }: CardDetailDialogProps) {
   return (
     <Dialog open={card !== null} onOpenChange={(open) => (!open ? onClose() : undefined)}>
@@ -66,6 +82,9 @@ export function CardDetailDialog({
             onUnassignLabel={onUnassignLabel}
             onCreateLabel={onCreateLabel}
             onDelete={onDelete}
+            onSetFocus={onSetFocus}
+            onClearFocus={onClearFocus}
+            onCategoryApplied={onCategoryApplied}
           />
         ) : null}
       </DialogContent>
@@ -88,6 +107,9 @@ function DetailContent({
   onUnassignLabel,
   onCreateLabel,
   onDelete,
+  onSetFocus,
+  onClearFocus,
+  onCategoryApplied,
 }: {
   card: CardT
   boardLabels: CardLabel[]
@@ -97,6 +119,9 @@ function DetailContent({
   onUnassignLabel: (cardId: string, labelId: string) => void
   onCreateLabel: (name: string, color: LabelColor) => Promise<CardLabel | null>
   onDelete: (id: string) => void
+  onSetFocus?: (cardId: string, slot: number) => void
+  onClearFocus?: (cardId: string) => void
+  onCategoryApplied?: (cardId: string, patch: CategoryApplied) => void
 }) {
   const [title, setTitle] = useState(card.title)
   const [description, setDescription] = useState(card.description ?? '')
@@ -272,6 +297,54 @@ function DetailContent({
         </div>
       </section>
 
+      {/* Focus (Spec 11) */}
+      {onSetFocus && onClearFocus ? (
+        <section className="space-y-2">
+          <p className="px-1 text-sm font-medium text-foreground/90">Focus</p>
+          <div className="flex flex-wrap items-center gap-1.5">
+            {[1, 2, 3].map((slot) => {
+              const active = card.is_focus_active && card.focus_slot === slot
+              return (
+                <button
+                  key={slot}
+                  type="button"
+                  onClick={() => onSetFocus(card.id, slot)}
+                  aria-pressed={active}
+                  className={cn(
+                    'inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-medium transition-colors duration-150 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/40',
+                    active
+                      ? 'border-ring bg-primary/15 text-foreground'
+                      : 'border-border/60 text-muted-foreground hover:bg-muted/60 hover:text-foreground',
+                  )}
+                >
+                  Slot {slot}
+                </button>
+              )
+            })}
+            {card.is_focus_active ? (
+              <button
+                type="button"
+                onClick={() => onClearFocus?.(card.id)}
+                className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors duration-150 motion-reduce:transition-none hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/40"
+              >
+                Entfernen
+              </button>
+            ) : null}
+          </div>
+          <p className="px-1 text-xs text-muted-foreground">
+            Max. 3 Slots. Ein belegter Slot wird ersetzt.
+          </p>
+        </section>
+      ) : null}
+
+      {/* Auto-Kategorisierung (Spec 15) */}
+      {onCategoryApplied ? (
+        <AutoCategorize
+          card={card}
+          onApplied={(patch) => onCategoryApplied(card.id, patch)}
+        />
+      ) : null}
+
       {/* Beschreibung */}
       <div className="space-y-2">
         <label htmlFor="card-description" className="px-1 text-sm font-medium text-foreground/90">
@@ -314,6 +387,134 @@ function DetailContent({
         </button>
       </div>
     </div>
+  )
+}
+
+type CategoryStatus = 'idle' | 'loading' | 'ready' | 'applying' | 'stale' | 'error'
+
+function AutoCategorize({
+  card,
+  onApplied,
+}: {
+  card: CardT
+  onApplied: (patch: CategoryApplied) => void
+}) {
+  const [status, setStatus] = useState<CategoryStatus>('idle')
+  const [suggestion, setSuggestion] = useState<CategorySuggestion | null>(null)
+
+  async function suggest() {
+    setStatus('loading')
+    const result = await suggestCategory(card.id)
+    if ('data' in result) {
+      setSuggestion(result.data)
+      setStatus('ready')
+    } else {
+      setStatus('error')
+    }
+  }
+
+  async function apply() {
+    if (!suggestion) return
+    setStatus('applying')
+    const result = await applySuggestion(suggestion.id)
+    if ('data' in result) {
+      onApplied({ priority: suggestion.priority, label: suggestion.label })
+      setSuggestion(null)
+      setStatus('idle')
+    } else if (result.error === 'stale') {
+      setStatus('stale')
+    } else {
+      setStatus('error')
+    }
+  }
+
+  function discard() {
+    setSuggestion(null)
+    setStatus('idle')
+  }
+
+  const busy = status === 'loading' || status === 'applying'
+  const prio = suggestion ? priorityConfig(suggestion.priority) : null
+  const hasSuggestionContent = Boolean(suggestion && (suggestion.label || suggestion.priority))
+
+  return (
+    <section className="space-y-2 rounded-xl border border-border/60 bg-card/40 p-3">
+      <div className="flex items-center justify-between gap-2">
+        <p className="px-0.5 text-sm font-medium text-foreground/90">Auto-Kategorisieren</p>
+        {status !== 'ready' ? (
+          <button
+            type="button"
+            onClick={suggest}
+            disabled={busy}
+            className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors duration-150 motion-reduce:transition-none hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/40 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {status === 'loading' ? (
+              <Loader2 className="size-3.5 animate-spin motion-reduce:animate-none" />
+            ) : (
+              <Sparkles className="size-3.5" />
+            )}
+            {status === 'stale' || status === 'error' ? 'Neu vorschlagen' : 'Vorschlag'}
+          </button>
+        ) : null}
+      </div>
+
+      {status === 'stale' ? (
+        <p className="text-xs text-muted-foreground">
+          Die Karte wurde zwischenzeitlich geaendert. Bitte neu vorschlagen.
+        </p>
+      ) : null}
+      {status === 'error' ? (
+        <p className="text-xs text-destructive">Vorschlag fehlgeschlagen. Bitte erneut versuchen.</p>
+      ) : null}
+
+      {status === 'ready' && suggestion ? (
+        <div className="space-y-2">
+          {hasSuggestionContent ? (
+            <div className="flex flex-wrap items-center gap-1.5">
+              {suggestion.label && isLabelColor(suggestion.label.color) ? (
+                <span
+                  style={labelChipStyle(suggestion.label.color)}
+                  className="rounded-md border px-1.5 py-0.5 text-[11px] font-medium"
+                >
+                  {suggestion.label.name}
+                </span>
+              ) : null}
+              {prio ? (
+                <span
+                  style={{ color: prio.color }}
+                  className="inline-flex items-center gap-1 rounded-md bg-muted/50 px-1.5 py-0.5 text-[11px] font-medium"
+                >
+                  <span
+                    style={{ backgroundColor: prio.color }}
+                    className="inline-block size-1.5 rounded-full"
+                  />
+                  {prio.label}
+                </span>
+              ) : null}
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground">Kein eindeutiger Vorschlag.</p>
+          )}
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={discard}
+              className="rounded-lg px-2.5 py-1 text-xs text-muted-foreground transition-colors duration-150 motion-reduce:transition-none hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/40"
+            >
+              Verwerfen
+            </button>
+            <button
+              type="button"
+              onClick={apply}
+              disabled={!hasSuggestionContent || status !== 'ready'}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-2.5 py-1 text-xs font-medium text-primary-foreground transition-opacity duration-150 motion-reduce:transition-none hover:opacity-90 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              Uebernehmen
+            </button>
+          </div>
+        </div>
+      ) : null}
+    </section>
   )
 }
 

@@ -32,7 +32,9 @@ export default async function BoardPage({ params }: BoardPageProps) {
       .order('position', { ascending: true }),
     supabase
       .from('cards')
-      .select('id, list_id, title, description, due_date, priority, position')
+      .select(
+        'id, list_id, title, description, due_date, priority, position, focus_slot, is_focus_active',
+      )
       .eq('board_id', boardId)
       .order('position', { ascending: true }),
     supabase

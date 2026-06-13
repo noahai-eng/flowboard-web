@@ -42,13 +42,13 @@ Legende: ⬜ offen · 🟦 in Arbeit · ✅ fertig
 | 7  | Cards-DnD | `07-dnd.md` | ✅ |
 | 8  | Card-Detail-Modal | `08-card-detail.md` | ✅ |
 | 9  | Labels + Priority | `09-labels-priority.md` | ✅ |
-| 10 | Smart-View Heute | `10-smart-view-heute.md` | ⬜ |
-| 11 | Focus-Mode | `11-focus-mode.md` | ⬜ |
-| 12 | Full-Text Search | `12-fts.md` | ⬜ |
-| 13 | Realtime-Sync | `13-realtime-sync.md` | ⬜ |
-| 14 | Smart-Card-Generation | `14-smart-card-generation.md` | ⬜ |
-| 15 | Auto-Categorization | `15-auto-categorize.md` | ⬜ |
-| 16 | Marketing-Landingpage | `16-marketing-landingpage.md` | ⬜ |
+| 10 | Smart-View Heute | `10-smart-view-heute.md` | ✅ |
+| 11 | Focus-Mode | `11-focus-mode.md` | ✅ |
+| 12 | Full-Text Search | `12-fts.md` | ✅ |
+| 13 | Realtime-Sync | `13-realtime-sync.md` | ✅ |
+| 14 | Smart-Card-Generation | `14-smart-card-generation.md` | ✅ (LLM-Call braucht `ANTHROPIC_API_KEY`) |
+| 15 | Auto-Categorization | `15-auto-categorize.md` | ✅ (LLM-Call braucht `REQUESTY_API_KEY`) |
+| 16 | Marketing-Landingpage | `16-marketing-landingpage.md` | ✅ |
 
 ## Reihenfolge-Begruendung
 

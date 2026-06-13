@@ -66,6 +66,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "card_labels_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "today_cards"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "card_labels_label_id_fkey"
             columns: ["label_id"]
             isOneToOne: false
@@ -80,11 +87,14 @@ export type Database = {
           created_at: string
           description: string | null
           due_date: string | null
+          focus_slot: number | null
           id: string
+          is_focus_active: boolean
           list_id: string
           owner: string
           position: number
           priority: number | null
+          search: unknown
           title: string
           updated_at: string
         }
@@ -93,11 +103,14 @@ export type Database = {
           created_at?: string
           description?: string | null
           due_date?: string | null
+          focus_slot?: number | null
           id?: string
+          is_focus_active?: boolean
           list_id: string
           owner?: string
           position?: number
           priority?: number | null
+          search?: unknown
           title: string
           updated_at?: string
         }
@@ -106,11 +119,14 @@ export type Database = {
           created_at?: string
           description?: string | null
           due_date?: string | null
+          focus_slot?: number | null
           id?: string
+          is_focus_active?: boolean
           list_id?: string
           owner?: string
           position?: number
           priority?: number | null
+          search?: unknown
           title?: string
           updated_at?: string
         }
@@ -127,6 +143,58 @@ export type Database = {
             columns: ["list_id"]
             isOneToOne: false
             referencedRelation: "lists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      category_suggestions: {
+        Row: {
+          card_id: string
+          card_updated_at: string
+          created_at: string
+          id: string
+          owner: string
+          suggested_label_id: string | null
+          suggested_priority: number | null
+        }
+        Insert: {
+          card_id: string
+          card_updated_at: string
+          created_at?: string
+          id?: string
+          owner?: string
+          suggested_label_id?: string | null
+          suggested_priority?: number | null
+        }
+        Update: {
+          card_id?: string
+          card_updated_at?: string
+          created_at?: string
+          id?: string
+          owner?: string
+          suggested_label_id?: string | null
+          suggested_priority?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "category_suggestions_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "cards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "category_suggestions_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "today_cards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "category_suggestions_suggested_label_id_fkey"
+            columns: ["suggested_label_id"]
+            isOneToOne: false
+            referencedRelation: "labels"
             referencedColumns: ["id"]
           },
         ]
@@ -224,9 +292,66 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      today_cards: {
+        Row: {
+          board_id: string | null
+          created_at: string | null
+          description: string | null
+          due_date: string | null
+          focus_slot: number | null
+          id: string | null
+          is_focus_active: boolean | null
+          list_id: string | null
+          owner: string | null
+          position: number | null
+          priority: number | null
+          title: string | null
+          updated_at: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cards_board_id_fkey"
+            columns: ["board_id"]
+            isOneToOne: false
+            referencedRelation: "boards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cards_list_id_fkey"
+            columns: ["list_id"]
+            isOneToOne: false
+            referencedRelation: "lists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
+      apply_suggestion: {
+        Args: { p_suggestion_id: string }
+        Returns: {
+          board_id: string
+          created_at: string
+          description: string | null
+          due_date: string | null
+          focus_slot: number | null
+          id: string
+          is_focus_active: boolean
+          list_id: string
+          owner: string
+          position: number
+          priority: number | null
+          search: unknown
+          title: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "cards"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       move_card: {
         Args: {
           p_after_card_id: string
@@ -239,11 +364,39 @@ export type Database = {
           created_at: string
           description: string | null
           due_date: string | null
+          focus_slot: number | null
           id: string
+          is_focus_active: boolean
           list_id: string
           owner: string
           position: number
           priority: number | null
+          search: unknown
+          title: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "cards"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      set_focus: {
+        Args: { p_card_id: string; p_slot: number }
+        Returns: {
+          board_id: string
+          created_at: string
+          description: string | null
+          due_date: string | null
+          focus_slot: number | null
+          id: string
+          is_focus_active: boolean
+          list_id: string
+          owner: string
+          position: number
+          priority: number | null
+          search: unknown
           title: string
           updated_at: string
         }
