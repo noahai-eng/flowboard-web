@@ -9,7 +9,7 @@ export default function LandingPage() {
       {/* Layered Gradient-Hintergrund */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,oklch(0.28_0.06_265)_0%,oklch(0.16_0.01_265)_55%,oklch(0.13_0.005_265)_100%)]"
+        className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,var(--accent)_0%,transparent_60%)]"
       />
       <div
         aria-hidden

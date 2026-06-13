@@ -54,7 +54,7 @@ export function Sidebar({ boards, boardsError = false, email }: SidebarProps) {
         id="app-sidebar"
         className={cn(
           'fixed inset-y-0 left-0 z-40 flex w-64 shrink-0 flex-col gap-6 border-r border-border/60 p-4',
-          'bg-[linear-gradient(180deg,oklch(0.22_0.01_265)_0%,oklch(0.17_0.005_265)_100%)] shadow-2xl shadow-black/30',
+          'bg-[linear-gradient(180deg,var(--sidebar)_0%,color-mix(in_oklch,var(--sidebar)_88%,var(--foreground)_12%)_100%)] shadow-2xl shadow-black/30',
           'transition-transform duration-200 ease-out motion-reduce:transition-none',
           'md:static md:z-auto md:translate-x-0 md:shadow-none',
           open ? 'translate-x-0' : '-translate-x-full md:translate-x-0',

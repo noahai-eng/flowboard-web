@@ -42,11 +42,11 @@ export function AuthForm({ mode, action }: AuthFormProps) {
       {/* Mehrschichtiger Gradient-Hintergrund (kein flacher Fill). */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(120%_120%_at_50%_-10%,oklch(0.3_0.05_265/0.45),transparent_60%)]"
+        className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(120%_120%_at_50%_-10%,color-mix(in_oklch,var(--primary)_18%,transparent)_0%,transparent_60%)]"
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(80%_60%_at_100%_100%,oklch(0.35_0.04_300/0.35),transparent_55%)]"
+        className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(80%_60%_at_100%_100%,color-mix(in_oklch,var(--accent)_60%,transparent)_0%,transparent_55%)]"
       />
 
       <div className="w-full max-w-sm">

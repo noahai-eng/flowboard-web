@@ -5,7 +5,7 @@ export default function BoardEntryPage() {
     <div className="relative grid min-h-dvh place-items-center overflow-hidden px-6 py-16">
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(90%_70%_at_50%_-10%,oklch(0.3_0.05_265/0.35),transparent_60%)]"
+        className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(90%_70%_at_50%_-10%,color-mix(in_oklch,var(--primary)_15%,transparent)_0%,transparent_60%)]"
       />
 
       <div className="max-w-md text-center">
