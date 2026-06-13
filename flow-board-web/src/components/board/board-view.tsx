@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import {
   DndContext,
   DragOverlay,
@@ -20,6 +21,7 @@ import {
   deleteCard,
   moveCard,
   updateCard,
+  type GeneratedCard,
 } from '@/app/(app)/board/[boardId]/card-actions'
 import {
   assignLabel,
@@ -27,7 +29,9 @@ import {
   setPriority,
   unassignLabel,
 } from '@/app/(app)/board/[boardId]/label-actions'
+import { clearFocus, setFocus } from '@/app/(app)/focus/focus-actions'
 import { createList, deleteList, renameList } from '@/app/(app)/board/[boardId]/list-actions'
+import { useRealtimeCards } from '@/components/board/use-realtime-cards'
 import { CardDetailDialog, type CardPatch } from '@/components/card/card-detail-dialog'
 import { AddList } from '@/components/list/add-list'
 import { ListColumn } from '@/components/list/list-column'
@@ -46,7 +50,11 @@ export function BoardView({ boardId, initialLists, initialLabels }: BoardViewPro
   const [lists, setLists] = useState<ListT[]>(initialLists)
   const [labels, setLabels] = useState<CardLabel[]>(initialLabels)
   const [activeCard, setActiveCard] = useState<CardT | null>(null)
-  const [selectedId, setSelectedId] = useState<string | null>(null)
+  // Volltextsuche (Spec 12): ?card=<id> oeffnet die Karte direkt beim Laden.
+  const searchParams = useSearchParams()
+  const [selectedId, setSelectedId] = useState<string | null>(
+    () => searchParams.get('card'),
+  )
   const selectedCard = lists.flatMap((l) => l.cards).find((c) => c.id === selectedId) ?? null
   // Snapshot vor dem Drag fuer Rollback bei Persistenz-Fehler.
   const snapshotRef = useRef<ListT[] | null>(null)
@@ -59,6 +67,9 @@ export function BoardView({ boardId, initialLists, initialLabels }: BoardViewPro
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   )
+
+  // Cross-Device-Sync (Spec 13): cards-Aenderungen dieses Boards live mergen.
+  useRealtimeCards(boardId, setLists)
 
   // --- Listen-Handler --------------------------------------------------------
 
@@ -122,6 +133,8 @@ export function BoardView({ boardId, initialLists, initialLabels }: BoardViewPro
           due_date: null,
           priority: null,
           position,
+          focus_slot: null,
+          is_focus_active: false,
           labels: [],
         }
         return { ...l, cards: [...l.cards, card] }
@@ -138,18 +151,20 @@ export function BoardView({ boardId, initialLists, initialLabels }: BoardViewPro
       return
     }
     setLists((prev) =>
-      prev.map((l) =>
-        l.id === listId
-          ? {
-              ...l,
-              cards: l.cards.map((c) =>
-                c.id === tempId
-                  ? { ...c, id: result.data.id, position: result.data.position }
-                  : c,
-              ),
-            }
-          : l,
-      ),
+      prev.map((l) => {
+        if (l.id !== listId) return l
+        // Realtime-Echo (Spec 13) koennte die echte Card schon eingefuegt haben.
+        // Dann nur die temp-Card entfernen, sonst temp -> echte id umschreiben.
+        const realExists = l.cards.some((c) => c.id === result.data.id)
+        const cards = realExists
+          ? l.cards.filter((c) => c.id !== tempId)
+          : l.cards.map((c) =>
+              c.id === tempId
+                ? { ...c, id: result.data.id, position: result.data.position }
+                : c,
+            )
+        return { ...l, cards }
+      }),
     )
   }
 
@@ -255,6 +270,75 @@ export function BoardView({ boardId, initialLists, initialLabels }: BoardViewPro
     if ('error' in result) return null
     setLabels((prev) => [...prev, result.data])
     return result.data
+  }
+
+  async function handleSetFocus(cardId: string, slot: number) {
+    const snapshot = lists
+    setLists((prev) =>
+      prev.map((l) => ({
+        ...l,
+        cards: l.cards.map((c) => {
+          if (c.id === cardId) return { ...c, focus_slot: slot, is_focus_active: true }
+          // Belegter Slot (gleiches Board sichtbar) wird optimistisch freigegeben.
+          if (c.is_focus_active && c.focus_slot === slot) {
+            return { ...c, focus_slot: null, is_focus_active: false }
+          }
+          return c
+        }),
+      })),
+    )
+    const result = await setFocus(cardId, slot)
+    if ('error' in result) setLists(snapshot)
+  }
+
+  async function handleClearFocus(cardId: string) {
+    const snapshot = lists
+    patchCard(cardId, (c) => ({ ...c, focus_slot: null, is_focus_active: false }))
+    const result = await clearFocus(cardId)
+    if ('error' in result) setLists(snapshot)
+  }
+
+  // Auto-Kategorisierung (Spec 15) wurde bereits per RPC persistiert -> nur
+  // lokalen State angleichen (keine zusaetzlichen Server-Calls).
+  function handleCategoryApplied(
+    cardId: string,
+    patch: { priority: number | null; label: CardLabel | null },
+  ) {
+    patchCard(cardId, (c) => {
+      const labels =
+        patch.label && !c.labels.some((l) => l.id === patch.label!.id)
+          ? [...c.labels, patch.label]
+          : c.labels
+      return { ...c, priority: patch.priority ?? c.priority, labels }
+    })
+  }
+
+  // KI-generierte Karten (Spec 14) sind bereits persistiert (echte ids) ->
+  // direkt anhaengen. Realtime-Echo dedupet per id (upsert).
+  function handleAddGeneratedCards(listId: string, generated: GeneratedCard[]) {
+    const cards: CardT[] = generated.map((g) => ({
+      id: g.id,
+      list_id: g.list_id,
+      title: g.title,
+      description: g.description,
+      due_date: null,
+      priority: g.priority,
+      position: g.position,
+      focus_slot: null,
+      is_focus_active: false,
+      labels: [],
+    }))
+    // Dedupe per id: ein Realtime-Echo (Spec 13) koennte dieselben Karten
+    // bereits eingefuegt haben. Vorhandene ids entfernen, dann nach position.
+    const ids = new Set(cards.map((c) => c.id))
+    setLists((prev) =>
+      prev.map((l) => {
+        const stripped = l.cards.filter((c) => !ids.has(c.id))
+        return l.id === listId
+          ? { ...l, cards: [...stripped, ...cards].sort((a, b) => a.position - b.position) }
+          : { ...l, cards: stripped }
+      }),
+    )
   }
 
   // --- DnD -------------------------------------------------------------------
@@ -395,6 +479,7 @@ export function BoardView({ boardId, initialLists, initialLabels }: BoardViewPro
             onAddCard={handleAddCard}
             onOpenCard={setSelectedId}
             onDeleteCard={handleDeleteCard}
+            onGeneratedCards={handleAddGeneratedCards}
           />
         ))}
         <AddList onAdd={handleAddList} />
@@ -421,6 +506,9 @@ export function BoardView({ boardId, initialLists, initialLabels }: BoardViewPro
           setSelectedId(null)
           void handleDeleteCard(id)
         }}
+        onSetFocus={handleSetFocus}
+        onClearFocus={handleClearFocus}
+        onCategoryApplied={handleCategoryApplied}
       />
     </DndContext>
   )

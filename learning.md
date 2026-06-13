@@ -107,3 +107,46 @@ nicht zu wiederholen.
 - **Verifikation ohne Browser:** Datenschicht via PostgREST mit echtem User-`access_token`
   (identischer RLS-Pfad wie Server Actions) + SSR-Render via nachgebautem `sb-<ref>-auth-token`-
   Cookie. Server Actions selbst sind per curl kaum aufrufbar (verschluesselte Action-IDs).
+
+## Phase C (Specs 10–16, MVP+ & Polish)
+
+- **React `ViewTransition` ist in React 19.2.4 NICHT im Runtime-Export** (nur Typen in
+  `@types/react/experimental.d.ts`). Next-`experimental.viewTransition` wuerde einen
+  experimentellen React-Channel brauchen. Cross-Fade daher mit `motion` `AnimatePresence`
+  (`mode="popLayout"`, keyed auf `usePathname`) im persistenten (app)-Layout geloest
+  (`ViewFade`), reduced-motion-safe. Echtes Overlap-Crossfade ohne Router-Internals.
+- **Generated `tsvector` braucht `'german'::regconfig`**, nicht `'german'` (text): der
+  regconfig-Overload von `to_tsvector` ist IMMUTABLE (Pflicht fuer generated columns), der
+  text-Overload nur STABLE → sonst Fehler beim `add column ... generated`.
+- **Deutscher Snowball-Stemmer ist ein Light-Stemmer:** `Rechnungen`→`rechnung` matcht,
+  aber `bezahlt`/`bezahlen` nicht (kein gemeinsamer Stamm). Erwartetes Postgres-Verhalten,
+  kein Bug — Stemming-Tests mit Plural/Singular statt Verbformen waehlen.
+- **Realtime: mehrere `postgres_changes`-Bindungen auf EINEM Channel feuern unzuverlaessig**
+  (verifiziert: getrennte INSERT/UPDATE-gefiltert + DELETE-ungefiltert → nur DELETE kam an).
+  Loesung: EINE `event:'*'`-Bindung mit `board_id`-Filter. Dank `replica identity full`
+  traegt auch der DELETE-old-Record `board_id` → der Spaltenfilter matcht DELETE ebenfalls
+  (entkraeftet die Discovery-Sorge, dass DELETE nicht filterbar sei). RLS verhindert Fremd-Board-Events.
+- **AI SDK 6:** strukturierter Output via `generateText`/`streamText` + `Output.object` /
+  `Output.array({ element })` (NICHT `generateObject`/`streamObject`). Client-Streaming von
+  Arrays mit `experimental_useObject` (`@ai-sdk/react`) + `schema: z.array(element)` +
+  `.toTextStreamResponse()`. Direktes Anthropic ueber `@ai-sdk/anthropic` (`ANTHROPIC_API_KEY`),
+  Requesty als OpenAI-kompatibler Gateway ueber `@ai-sdk/openai-compatible`
+  (`createOpenAICompatible`, baseURL `https://router.requesty.ai/v1`, `REQUESTY_API_KEY`).
+- **Proxy & shared Endpunkte:** `/api/*` ohne Session → `401` statt `/login`-Redirect
+  (Expo/HTTP-Clients). Landing-Route `'/'` VOR dem Auth-Gate behandeln: ausgeloggt public,
+  eingeloggt → `/board`. Loop-frei, weil `/login`/`/signup`/Assets schon im `config.matcher`
+  ausgenommen sind. `getClaims()` muss weiterhin direkt nach `createServerClient` stehen —
+  neue Variablen/Helfer erst danach deklarieren.
+- **base-ui Dialog unmountet den Popup beim Schliessen** → `useObject`-State (Generate-Dialog)
+  setzt sich pro Oeffnen automatisch zurueck; kein manuelles Reset noetig.
+- **AI-Provider-Fehler nicht als ganzes Objekt loggen** (koennen Request/Response-Header
+  enthalten) — in der Action lokal fangen und nur `err.message` loggen (Key-Hygiene).
+- **Requesty + Anthropic unterstuetzt KEIN `response_format` json_schema** (das `Output.object`
+  emittiert): Live-Fehler „responseFormat is not supported … only supported with
+  structuredOutputs" → `AI_NoObjectGeneratedError`. Loesung fuer Spec 15: striktes JSON im
+  Prompt anfordern + serverseitig robust parsen (Code-Fences/Praefix tolerieren) und per Zod
+  validieren. Spec 14 (direct Anthropic via `@ai-sdk/anthropic`) kann `Output.array` dagegen
+  problemlos nutzen — die Einschraenkung liegt am Requesty-Gateway, nicht am Modell.
+- **AI SDK `Output.array` Wire-Format:** `toTextStreamResponse()` streamt `{"elements":[…]}`
+  (nicht ein nacktes Array). `experimental_useObject` mit `schema: z.array(element)` entpackt
+  das transparent zur Array-`object`-Form. Beim Roh-Test der Response also auf `elements` pruefen.

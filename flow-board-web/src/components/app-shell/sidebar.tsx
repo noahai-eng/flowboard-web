@@ -7,6 +7,7 @@ import { useState, type ReactNode } from 'react'
 import { CreateBoardDialog } from '@/components/board/create-board-dialog'
 import { cn } from '@/lib/utils'
 
+import { SearchBox } from './search-box'
 import { UserMenu } from './user-menu'
 
 type BoardNavItem = { id: string; title: string }
@@ -64,10 +65,23 @@ export function Sidebar({ boards, boardsError = false, email }: SidebarProps) {
         </div>
 
         <nav className="flex flex-1 flex-col gap-6 overflow-y-auto">
+          <SearchBox onNavigate={close} />
+
           <Section label="Smart-Views">
-            {/* Platzhalter — werden in Spec 10/11 aktiv. */}
-            <PlaceholderItem icon={<TodayIcon />} label="Heute" />
-            <PlaceholderItem icon={<FocusIcon />} label="Focus" />
+            <NavLink
+              href="/today"
+              active={pathname === '/today'}
+              icon={<TodayIcon />}
+              label="Heute"
+              onNavigate={close}
+            />
+            <NavLink
+              href="/focus"
+              active={pathname === '/focus'}
+              icon={<FocusIcon />}
+              label="Focus"
+              onNavigate={close}
+            />
           </Section>
 
           <Section label="Boards">
@@ -164,18 +178,6 @@ function NavLink({
       <span className="shrink-0 text-current opacity-80">{icon}</span>
       <span className="truncate">{label}</span>
     </Link>
-  )
-}
-
-function PlaceholderItem({ icon, label }: { icon: ReactNode; label: string }) {
-  return (
-    <div className="flex cursor-default items-center gap-3 rounded-xl px-3 py-2 text-sm text-muted-foreground/70">
-      <span className="shrink-0 opacity-70">{icon}</span>
-      <span className="truncate">{label}</span>
-      <span className="ml-auto rounded-md bg-muted/60 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-        Bald
-      </span>
-    </div>
   )
 }
 

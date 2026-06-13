@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 
 import { safeAction, type ActionResult } from '@/lib/action-result'
+import { cardSuggestionSchema } from '@/lib/ai/card-suggestion'
 import { createClient } from '@/lib/supabase/server'
 
 const titleSchema = z
@@ -154,6 +155,75 @@ export async function moveCard(
 
     revalidatePath(`/board/${data.board_id}`)
     return { data: undefined }
+  })
+}
+
+export type GeneratedCard = {
+  id: string
+  list_id: string
+  title: string
+  description: string | null
+  priority: number | null
+  position: number
+}
+
+const suggestionsSchema = z.array(cardSuggestionSchema).min(1).max(12)
+
+// Spec 14: mehrere KI-Vorschlaege gebuendelt in eine Liste uebernehmen.
+// Ein Insert -> korrekte Positionen, owner via Default (auth.uid), RLS-geschuetzt.
+export async function createGeneratedCards(
+  listId: string,
+  suggestions: unknown,
+): Promise<ActionResult<GeneratedCard[]>> {
+  return safeAction<GeneratedCard[]>(async () => {
+    const parsed = suggestionsSchema.safeParse(suggestions)
+    if (!parsed.success) {
+      return { error: 'Ungueltige Vorschlaege.' }
+    }
+
+    const supabase = await createClient()
+
+    const { data: list } = await supabase
+      .from('lists')
+      .select('id, board_id')
+      .eq('id', listId)
+      .maybeSingle()
+    if (!list) {
+      return { error: 'Liste nicht gefunden.' }
+    }
+
+    const { data: last, error: lastError } = await supabase
+      .from('cards')
+      .select('position')
+      .eq('list_id', listId)
+      .order('position', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    if (lastError) {
+      return { error: 'Karten konnten nicht angelegt werden.' }
+    }
+    const start = (last?.position ?? 0) + 1000
+
+    const rows = parsed.data.map((s, i) => ({
+      list_id: listId,
+      board_id: list.board_id,
+      title: s.title,
+      description: s.description ?? null,
+      priority: s.priority ?? null,
+      position: start + i * 1000,
+    }))
+
+    const { data, error } = await supabase
+      .from('cards')
+      .insert(rows)
+      .select('id, list_id, title, description, priority, position')
+
+    if (error || !data) {
+      return { error: 'Karten konnten nicht angelegt werden.' }
+    }
+
+    revalidatePath(`/board/${list.board_id}`)
+    return { data }
   })
 }
 

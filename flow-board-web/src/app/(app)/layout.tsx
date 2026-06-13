@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 
 import { Sidebar } from '@/components/app-shell/sidebar'
+import { ViewFade } from '@/components/app-shell/view-fade'
 import { createClient } from '@/lib/supabase/server'
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
@@ -29,7 +30,9 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-dvh flex-col md:flex-row">
       <Sidebar boards={boards} boardsError={boardsError} email={email} />
-      <main className="flex-1 overflow-y-auto">{children}</main>
+      <main className="flex-1 overflow-y-auto">
+        <ViewFade>{children}</ViewFade>
+      </main>
     </div>
   )
 }

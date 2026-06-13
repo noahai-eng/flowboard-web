@@ -2,6 +2,57 @@
 
 Was pro Spec / Phase fertig wurde. Neueste Eintraege oben.
 
+## Phase C — MVP+ & Polish, Specs 10–16 (2026-06-13)
+
+Alle 7 Specs nacheinander implementiert, je einzeln Codex-reviewed, Findings gefixt;
+ein gemeinsamer Commit am Ende (Wunsch fuer Ueberblick).
+
+**Shared:** board-uebergreifende Smart-Views ueber `SmartCardT` + Hook
+`useSmartCardActions` (optimistische Handler, wiederverwendet von Heute/Focus);
+`CardT` um `focus_slot`/`is_focus_active` erweitert; Cross-Fade beim View-Wechsel via
+`AnimatePresence` (`ViewFade`, mode `popLayout`, reduced-motion-safe) im persistenten
+(app)-Layout; `database.types.ts` nach jeder DDL neu generiert.
+
+- **10 Smart-View Heute:** SQL-View `today_cards` (`security_invoker`, User-TZ via
+  `profiles.timezone`); Route `(app)/today`, Priority-Gruppen, Empty-State. Codex: echter
+  Cross-Fade statt Fade-in (Blocker); View `left join` + `coalesce(timezone)` (fehlendes
+  Profil); gepatchte Felder-Rollback-Guard.
+- **11 Focus-Mode:** `focus_slot`/`is_focus_active` + Partial-Unique-Index (max 3, im Schema
+  erzwungen) + CHECK (aktiv⇒Slot); RPC `set_focus` (SECURITY INVOKER, Slot-Tausch atomar,
+  Owner-Rows `for update` gegen Races); Route `(app)/focus`, Slot-Auswahl im Detail-Modal.
+  Codex: RPC-Lock, `selectedId`-Rollback, Focus-Ring auf Button, Section nur bei beiden Props.
+- **12 Full-Text Search:** `cards.search` (generated `tsvector`, `'german'::regconfig`
+  → immutable) + GIN-Index; `searchCards` (websearch, RLS); debounced SearchBox in der
+  Sidebar, Treffer öffnen `/board/[id]?card=` (BoardView liest Param als Initial-State).
+  Codex: in-flight-Request invalidieren bei clear/reset.
+- **13 Realtime-Sync:** `cards` in Publication + `replica identity full`; Hook
+  `useRealtimeCards` — EINE `event:'*'`-Bindung mit `board_id`-Filter (mehrere Bindungen
+  feuern unzuverlässig; DELETE matcht dank replica-full den Filter), idempotenter id-Upsert,
+  Cleanup via `removeChannel`; Reconcile-Guard gegen temp/real-Doppel. Codex: PASS.
+- **14 Smart-Card-Generation:** Route Handler `api/cards/generate` (AI SDK 6 `streamText`
+  + `Output.array`, `@ai-sdk/anthropic`, `ANTHROPIC_API_KEY` server-only), `getClaims`→401,
+  Prompt-Limit; Client `useObject` mit Stagger (50ms, reduced-motion), Auswahl + Bulk-Persist
+  `createGeneratedCards`. Proxy: `/api/*` ohne Session → 401 statt /login-Redirect (Expo).
+  Codex: Append-Dedupe vs Realtime-Echo, valide-Vorschläge-Zählung, segmentgenauer /api-Check.
+- **15 Auto-Categorization:** `category_suggestions` (+RLS) mit `card_updated_at`-Snapshot;
+  RPC `apply_suggestion` (Versions-Check → `stale`, card_labels-RLS sichert Board-Scope);
+  `suggestCategory` (Haiku via Requesty, `@ai-sdk/openai-compatible`, `REQUESTY_API_KEY`
+  server-only) wählt nur existierende Board-Labels; AutoCategorize-Sektion im Modal, Apply
+  aktualisiert nur lokalen State. Codex: LLM-Fehler nur als Message loggen (Key-Hygiene),
+  Prompt-Injection-Härtung (Daten-Block), Label-Name trimmen.
+- **16 Marketing-Landingpage:** öffentliche `/` (Hero, Feature-Cards, CTA→/signup); Proxy
+  leitet NUR `/` für eingeloggte User → `/board`, `/login`/`/signup`/Assets ausgenommen
+  (kein Loop). Codex: PASS.
+
+**Verifikation je Spec:** typecheck + lint grün; Datenschicht via PostgREST mit echtem
+User-Token (gleicher RLS-Pfad) + SSR-Render. 10: TZ-Grenzfälle (Kiritimati/Honolulu) +
+RLS. 11: 4.-Slot/Unique-409, CHECK-400, RLS-400, Swap-Displace. 12: Stemming/websearch/
+Phrase/RLS + EXPLAIN (GIN-Scan). 13: supabase-js Realtime INSERT/UPDATE/DELETE + kein
+Fremd-Board-Leak. 14: 401/400 (Auth/Validation). 15: apply/stale/RLS via RPC. 16: Loop-Test
+ein-/ausgeloggt. `get_advisors` nach jeder DDL ohne Findings. **Offen:** LLM-Happy-Path
+(14 Stream, 15 Vorschlag) erst lauffähig, sobald `ANTHROPIC_API_KEY` + `REQUESTY_API_KEY`
+in `.env.local` stehen.
+
 ## Phase B — Kern-Kanban, Specs 04–09 (2026-06-12)
 
 Alle 6 Specs nacheinander implementiert, je einzeln Codex-reviewed, Findings gefixt;

@@ -5,7 +5,9 @@ import { useDroppable } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
 
+import type { GeneratedCard } from '@/app/(app)/board/[boardId]/card-actions'
 import { CardItem } from '@/components/card/card-item'
+import { GenerateCardsDialog } from '@/components/card/generate-cards-dialog'
 import { QuickAddCard } from '@/components/card/quick-add-card'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import {
@@ -24,6 +26,7 @@ type ListColumnProps = {
   onAddCard: (listId: string, title: string) => void
   onOpenCard: (cardId: string) => void
   onDeleteCard: (cardId: string) => void
+  onGeneratedCards: (listId: string, cards: GeneratedCard[]) => void
 }
 
 export function ListColumn({
@@ -33,6 +36,7 @@ export function ListColumn({
   onAddCard,
   onOpenCard,
   onDeleteCard,
+  onGeneratedCards,
 }: ListColumnProps) {
   const [editing, setEditing] = useState(false)
   const [title, setTitle] = useState(list.title)
@@ -132,6 +136,12 @@ export function ListColumn({
           ))}
         </SortableContext>
         <QuickAddCard onAdd={(title) => onAddCard(list.id, title)} />
+        <div className="px-0.5">
+          <GenerateCardsDialog
+            listId={list.id}
+            onCreated={(cards) => onGeneratedCards(list.id, cards)}
+          />
+        </div>
       </div>
 
       <ConfirmDialog
